@@ -194,6 +194,10 @@ def ImageToNumpyArrayTest(args) :
 	copy = Simd.Image(image.Format(), image.Width(), image.Height(), 0, image.Width()* image.Format().PixelSize(), array.ctypes.data)
 	#print(array.shape())
 	copy.Save("numpy.array.jpg")
+	# A pre-allocated destination of the right shape must be reused, not replaced.
+	reused = image.CopyToNumpyArray(array)
+	if reused is not array :
+		raise Exception("CopyToNumpyArray must reuse a compatible destination array!")
 
 	
 ###################################################################################################

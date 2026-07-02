@@ -472,9 +472,9 @@ class Lib():
 		Lib.__lib.SimdEmpty.restype = None
 		
 		Lib.__lib.SimdGetFastMode.argtypes = []
-		Lib.__lib.SimdGetFastMode.restype = ctypes.c_bool
-		
-		Lib.__lib.SimdSetFastMode.argtypes = [ ctypes.c_bool ]
+		Lib.__lib.SimdGetFastMode.restype = ctypes.c_int32
+
+		Lib.__lib.SimdSetFastMode.argtypes = [ ctypes.c_int32 ]
 		Lib.__lib.SimdSetFastMode.restype = None
 		
 		Lib.__lib.SimdCrc32.argtypes = [ ctypes.c_void_p, ctypes.c_size_t ]
@@ -653,7 +653,7 @@ class Lib():
 		Lib.__lib.SimdShiftDetectorSetBackground.argtypes = [ ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int32]
 		Lib.__lib.SimdShiftDetectorSetBackground.restype = None
 
-		Lib.__lib.SimdShiftDetectorEstimate.argtypes = [ ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_size_t, ctypes.c_size_t, ctypes.c_size_t, ctypes.c_size_t, ctypes.c_size_t, ctypes.c_size_t, ctypes.POINTER(ctypes.c_double), ctypes.c_size_t]
+		Lib.__lib.SimdShiftDetectorEstimate.argtypes = [ ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_size_t, ctypes.c_size_t, ctypes.c_size_t, ctypes.c_size_t, ctypes.c_size_t, ctypes.c_size_t, ctypes.POINTER(ctypes.c_double), ctypes.c_ssize_t]
 		Lib.__lib.SimdShiftDetectorEstimate.restype = ctypes.c_int32
 		
 		Lib.__lib.SimdShiftDetectorGetShift.argtypes = [ ctypes.c_void_p, ctypes.POINTER(ctypes.c_ssize_t), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double)]
@@ -664,7 +664,7 @@ class Lib():
 		Lib.__lib.SimdStretchGray2x2.restype = None
 
 		
-		Lib.__lib.SimdSynetSetInput.argtypes = [ ctypes.c_void_p, ctypes.c_size_t, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int32, ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float), ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int32 ]
+		Lib.__lib.SimdSynetSetInput.argtypes = [ ctypes.c_void_p, ctypes.c_size_t, ctypes.c_size_t, ctypes.c_size_t, ctypes.c_int32, ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float), ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int32 ]
 		Lib.__lib.SimdSynetSetInput.restype = None
 
 		
@@ -823,12 +823,12 @@ class Lib():
 	## Gets current CPU Flush-To-Zero (FTZ) and Denormals-Are-Zero (DAZ) flags. It is used in order to process subnormal numbers.
 	# @return current 'fast' mode.	
 	def GetFastMode() -> bool: 
-		return Lib.__lib.SimdGetFastMode()
+		return bool(Lib.__lib.SimdGetFastMode())
 	
 	## Sets current CPU Flush-To-Zero (FTZ) and Denormals-Are-Zero (DAZ) flags. It is used in order to process subnormal numbers.
 	# @param fast - a value of 'fast' mode to set.	
 	def SetFastMode(fast: bool) : 
-		Lib.__lib.SimdSetFastMode(fast)
+		Lib.__lib.SimdSetFastMode(int(fast))
 		
     ## Gets 32-bit cyclic redundancy check (CRC32) for current data.
 	# Calculation is performed for polynomial 0xEDB88320.
@@ -1548,12 +1548,12 @@ class Image():
 	# @param align - a row size alignment in bytes (optional).
 	# @param stride - a row size in bytes of image created on the base of external image (optional). 
 	# @param data - a pointer to external image pixel data (optional). 
-	def __init__(self, format = Simd.PixelFormat.Empty, width = 0, height = 0, align = 0, stride = 0, data = ctypes.c_void_p(0)) :
-		self.__data = ctypes.c_void_p(0)
+	def __init__(self, format = Simd.PixelFormat.Empty, width = 0, height = 0, align = 0, stride = 0, data = 0) :
+		self.__data = 0
 		self.__owner = False
 		self.Clear()
 		if format != Simd.PixelFormat.Empty and width > 0 and height > 0 :
-			if data != 0 and stride != 0 :
+			if data and stride != 0 :
 				self.FromExternal(format, width, height, stride, data)
 			else :
 				self.Recreate(format, width, height, align)
@@ -1589,13 +1589,15 @@ class Image():
 	# @param height - a new image height.
 	# @param stride - a row size in bytes of external image. 
 	# @param data - a pointer to external image pixel data. 
-	def FromExternal(self, format : Simd.PixelFormat, width : int, height : int, stride : int, data : ctypes.c_void_p) :
+	def FromExternal(self, format : Simd.PixelFormat, width : int, height : int, stride : int, data) :
 		self.Clear()
 		self.__width = width
 		self.__height = height
 		self.__stride = stride
 		self.__format = format
-		self.__data = data
+		# Normalize the pointer to a plain int (ctypes returns int for c_void_p results;
+		# accept c_void_p objects too). All native calls take int as a c_void_p argument.
+		self.__data = int(data.value or 0) if isinstance(data, ctypes.c_void_p) else int(data or 0)
 	
 	## Check if current and other image have the same size and pixel format.
 	# @param other - other image.
@@ -1616,9 +1618,9 @@ class Image():
 		self.__height = 0
 		self.__stride = 0
 		self.__format = Simd.PixelFormat.Empty
-		if self.__data != 0 and self.__owner :
+		if self.__data and self.__owner :
 			Lib.Free(self.__data)
-		self.__data = ctypes.c_void_p(0)
+		self.__data = 0
 		self.__owner = False
 		
 	## Gets image width.
@@ -1642,8 +1644,8 @@ class Image():
 		return self.__format
 	
 	## Gets pointer to image pixel data.
-	# @return pointer to image pixel data.	
-	def Data(self) -> ctypes.c_void_p :
+	# @return pointer to image pixel data as an integer address (0 if empty).
+	def Data(self) -> int :
 		return self.__data
 	
 	## Loads an image from file.
@@ -1654,7 +1656,7 @@ class Image():
 	def Load(self, path : str, desiredFormat = Simd.PixelFormat.Empty) -> bool:
 		self.Clear()
 		data, stride, width, height, format = Lib.ImageLoadFromFile(path, desiredFormat)
-		if data != 0 :
+		if data :
 			self.__width = width
 			self.__height = height
 			self.__stride = stride
@@ -1679,7 +1681,7 @@ class Image():
     # @param bottom - a bottom side of the region.
     # @return - a new Simd.Image which points to the subregion of current image.
 	def Region(self, left: int, top : int, right : int, bottom : int) :
-		if self.Data() == ctypes.c_void_p(0) or right <= left or bottom <= top :
+		if not self.Data() or right <= left or bottom <= top :
 			return Simd.Image()
 		left = min(max(left, 0), self.Width())
 		top = min(max(top, 0), self.Height())
@@ -1718,7 +1720,7 @@ class Image():
 	# @param dst - an output image. It can be empty.
 	# @return copied image.
 	def Copy(self, dst = None) :
-		if dst == None :
+		if dst is None :
 			dst = Image(self.Format(), self.Width(), self.Height())
 		if not self.Compatible(dst) :
 			raise Exception("Current and output images are incompatible!")
@@ -1854,7 +1856,7 @@ class Image():
 	# @param dst - an output numpy.array with image copy.
 	# @return - output numpy.array with image copy. 
 	def CopyToNumpyArray(self, dst = None) :
-		if (dst == None) or (not dst.shape == [self.Height(), self.Width(), self.Format().PixelSize()]) :
+		if dst is None or dst.shape != (self.Height(), self.Width(), self.Format().PixelSize()) :
 			dst = numpy.empty([self.Height(), self.Width(), self.Format().PixelSize()], dtype = numpy.ubyte)
 		size = self.Width() * self.Format().PixelSize()
 		for y in range(self.Height()) :
@@ -1995,7 +1997,7 @@ class ImageFrame():
 	# @param dst - an output image frame. It can be empty.
 	# @return copied image frame.
 	def Copy(self, dst = None) :
-		if dst == None :
+		if dst is None :
 			dst = ImageFrame(self.Format(), self.Width(), self.Height(), self.GetYuvType())
 		if not self.Compatible(dst) :
 			raise Exception("Current and output images are incompatible!")
@@ -2292,7 +2294,7 @@ class ShiftingDetector():
 	# @param textureType - type of textures used to detect shift (see Simd.ShiftDetectorTexture).
 	# @param differenceType - type of correlation functions used to detect shift (see Simd.ShiftDetectorDifference).
 	def __init__(self, background = Simd.Image(), levelCount = 4, textureType = Simd.ShiftDetectorTexture.Gray, differenceType = Simd.ShiftDetectorDifference.Abs) :
-		self.__context = ctypes.c_void_p(0)
+		self.__context = 0
 		self.__frameSize = [0, 0]
 		self.__levelCount = levelCount
 		self.__textureType = textureType
@@ -2302,7 +2304,7 @@ class ShiftingDetector():
 	
 	## Releases shift detector context.
 	def __del__(self) :
-		if self.__context != 0 :
+		if self.__context :
 			Simd.Lib.Release(self.__context)
 
 	## Sets background image in shift detector and recreates internal structures if it needs.
@@ -2310,7 +2312,7 @@ class ShiftingDetector():
 	# @param levelCount - the number of levels in the internal image pyramids used to find shift.
 	def SetBackground(self, background = Simd.Image, levelCount = 4) :
 		if self.__frameSize[0] != background.Width() or self.__frameSize[1] != background.Height() or self.__levelCount != levelCount :
-			if self.__context != 0 :
+			if self.__context :
 				Simd.Lib.Release(self.__context)
 			self.__frameSize[0] = background.Width()
 			self.__frameSize[1] = background.Height()
@@ -2365,26 +2367,26 @@ class TextFont():
 	def __init__(self, height = 16) :
 		self.__valid = False
 		self.__context = Simd.Lib.FontInit()
-		if self.__context != ctypes.c_void_p(0) :
+		if self.__context :
 			self.__valid = Simd.Lib.FontResize(self.__context, height)
 	
 	## Releases font context.
 	def __del__(self) :
-		if self.__context != 0 :
+		if self.__context :
 			Simd.Lib.Release(self.__context)
 
 	## Sets new size (height) to font.
 	# @param height - a new font height.
 	# @return True if resize operation is OK.
 	def Resize(self, height : int) -> bool:
-		if self.__context != 0 :
+		if self.__context :
 			self.__valid = Simd.Lib.FontResize(self.__context, height)
 		return self.__valid
 
 	## Gets current font height.
 	# @return height of the font.
 	def Height(self) -> int:
-		if self.__context != 0 and self.__valid:
+		if self.__context and self.__valid:
 			return Simd.Lib.FontHeight(self.__context)
 		return 0
 
@@ -2392,7 +2394,7 @@ class TextFont():
 	# @param text - a text which size need to measure.
 	# @return size of region which need to draw current text with using of given font. 
 	def Measure(self, text: str) -> [int, int]:
-		if self.__context != 0 and self.__valid:
+		if self.__context and self.__valid:
 			return Simd.Lib.FontMeasure(self.__context, text)
 		return [0, 0]
 
@@ -2403,17 +2405,17 @@ class TextFont():
 	# @param color - a foreground text color. 
 	# @param background - a background text color. By default it is equal to None.
 	def Draw(self, canvas : Image, text: str, position, color : array.array('B'), background = None):
-		if self.__context == 0 or self.__valid == False:
+		if not self.__context or not self.__valid:
 			return
 		width, height = self.Measure(text)
 		if isinstance(position, Simd.Position):
 			region = canvas.RegionAt(width, height, position)
-			if background != None :
+			if background is not None :
 				region.Fill(background)
 			Simd.Lib.FontDraw(self.__context, region.Data(), region.Stride(), region.Width(), region.Height(), region.Format().PixelSize(), text, 0, 0, color)
 		elif len(position) == 2 and all(type(item)==int for item in position):
 			left, top = position
-			if background != None :
+			if background is not None :
 				canvas.DrawFilledRectangle(left, top, left + width, top + height, background)
 			Simd.Lib.FontDraw(self.__context, canvas.Data(), canvas.Stride(), canvas.Width(), canvas.Height(), canvas.Format().PixelSize(), text, left, top, color)
 
@@ -2475,7 +2477,7 @@ def ResizeImage(src : Image, dst : Image, method = Simd.ResizeMethod.Bilinear) :
 	if dst.Format() != src.Format() :
 		raise Exception("Incompatible image pixel formats!")
 	resizer = Lib.ResizerInit(src.Width(), src.Height(), dst.Width(), dst.Height(), src.Format().ChannelCount(), Simd.PixelFormatToResizeChannel(src.Format()), method)
-	if resizer == ctypes.c_void_p(0) :
+	if not resizer :
 		raise Exception("Can't create resizer context !")
 	Lib.ResizerRun(resizer, src.Data(), src.Stride(), dst.Data(), dst.Stride())
 	Lib.Release(resizer)
@@ -2503,7 +2505,7 @@ def ResizeFrame(src : ImageFrame, dst : ImageFrame, method = Simd.ResizeMethod.B
 	sp = src.Planes()
 	dp = dst.Planes()
 	mainResizer = Lib.ResizerInit(sp[0].Width(), sp[0].Height(), dp[0].Width(), dp[0].Height(), sp[0].Format().ChannelCount(), Simd.PixelFormatToResizeChannel(sp[0].Format()), method)
-	if mainResizer == ctypes.c_void_p(0) :
+	if not mainResizer :
 		raise Exception("Can't create resizer context for frame plane 0!")
 	Lib.ResizerRun(mainResizer, sp[0].Data(), sp[0].Stride(), dp[0].Data(), dp[0].Stride())
 	if src.Format() == Simd.FrameFormat.Yuv444p:
@@ -2512,7 +2514,7 @@ def ResizeFrame(src : ImageFrame, dst : ImageFrame, method = Simd.ResizeMethod.B
 	Lib.Release(mainResizer)
 	if src.Format() == Simd.FrameFormat.Yuv420p or src.Format() == Simd.FrameFormat.Nv12:
 		halfResizer = Lib.ResizerInit(sp[1].Width(), sp[1].Height(), dp[1].Width(), dp[1].Height(), sp[1].Format().ChannelCount(), Simd.PixelFormatToResizeChannel(sp[1].Format()), method)
-		if halfResizer == ctypes.c_void_p(0) :
+		if not halfResizer :
 			raise Exception("Can't create resizer context for frame plane 1!")
 		Lib.ResizerRun(halfResizer, sp[1].Data(), sp[1].Stride(), dp[1].Data(), dp[1].Stride())
 		if src.Format() == Simd.FrameFormat.Yuv420p:
@@ -2587,7 +2589,7 @@ def WarpAffine(src : Image, mat: array.array('f'), dst : Image, flags = (Simd.Wa
 		raise Exception("Incompatible Warp Affine flag!")
 	
 	context = Lib.WarpAffineInit(src.Width(), src.Height(), src.Stride(), dst.Width(), dst.Height(), dst.Stride(), src.Format().ChannelCount(), mat, flags, border)
-	if context == ctypes.c_void_p(0) :
+	if not context :
 		raise Exception("Can't create Warp Affine context !")
 	
 	Lib.WarpAffineRun(context, src.Data(), dst.Data())
