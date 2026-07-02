@@ -202,10 +202,10 @@ namespace Simd
 #ifdef SIMD_SVE2_ENABLE
     namespace Sve2
     {
-        SIMD_INLINE svuint8_t GrayToY(const svuint8_t& g, const svuint16_t& round, const svbool_t _true)
+        SIMD_INLINE svuint8_t GrayToY(const svuint8_t& g, const svbool_t _true)
         {
-            svuint16_t yb = svmlalb_n_u16(round, g, Base::G2Y_SCALE);
-            svuint16_t yt = svmlalt_n_u16(round, g, Base::G2Y_SCALE);
+            svuint16_t yb = svmullb_n_u16(g, Base::G2Y_SCALE);
+            svuint16_t yt = svmullt_n_u16(g, Base::G2Y_SCALE);
             svuint8_t y = svqrshrnt_n_u16(svqrshrnb_n_u16(yb, Base::G2Y_SHIFT), yt, Base::G2Y_SHIFT);
             return svmin_n_u8_x(_true, svqadd_n_u8(y, Base::G2Y_LO), Base::G2Y_HI);
         }
