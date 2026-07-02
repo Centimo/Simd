@@ -34,13 +34,14 @@ namespace Simd
             size_t widthA = AlignLo(width, A);
             const svbool_t body = svptrue_b8();
             const svbool_t tail = svwhilelt_b8(widthA, width);
+            const svuint16_t round = svdup_n_u16(Base::G2Y_ROUND);
             for (size_t row = 0; row < height; ++row)
             {
                 size_t col = 0;
                 for (; col < widthA; col += A)
-                    svst1_u8(body, y + col, GrayToY(svld1_u8(body, gray + col), body));
+                    svst1_u8(body, y + col, GrayToY(svld1_u8(body, gray + col), round, body));
                 if (col < width)
-                    svst1_u8(tail, y + col, GrayToY(svld1_u8(tail, gray + col), body));
+                    svst1_u8(tail, y + col, GrayToY(svld1_u8(tail, gray + col), round, body));
                 gray += grayStride;
                 y += yStride;
             }
