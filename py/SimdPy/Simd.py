@@ -2774,9 +2774,9 @@ def ReduceGray2x2(src : Image, dst : Image) -> Image :
 	if src.Format() != Simd.PixelFormat.Gray8 :
 		raise Exception("Unsupported input pixel format {0} != Simd.PixelFormat.Gray8!".format(src.Format()))
 	if dst.Format() == Simd.PixelFormat.Empty :
-		dst.Recreate(src.Format(), src.Width() // 2, src.Height() // 2)
-	elif src.Width() != dst.Width() * 2 or src.Height() != dst.Height() * 2 :
-		raise Exception("Wrong output image size: ({0}, {1}) * 2 !=  ({2}, {3})!".format(dst.Width(), dst.Height(), src.Width(), src.Height()))
+		dst.Recreate(src.Format(), (src.Width() + 1) // 2, (src.Height() + 1) // 2)
+	elif dst.Width() != (src.Width() + 1) // 2 or dst.Height() != (src.Height() + 1) // 2 :
+		raise Exception("Wrong output image size: ({0}, {1}) != (({2} + 1)/2, ({3} + 1)/2)!".format(dst.Width(), dst.Height(), src.Width(), src.Height()))
 	Lib.ReduceGray2x2(src.Data(), src.Stride(), src.Width(), src.Height(), dst.Data(), dst.Stride(), dst.Width(), dst.Height())
 	return dst
 

@@ -230,6 +230,10 @@ def ReduceGray2x2Test(args) :
 	image = Simd.ResizedImage(LoadTestImage(args, Simd.PixelFormat.Gray8), 400, 300)
 	reduced = Simd.ReduceGray2x2(image, Simd.Image())
 	reduced.Save("ReduceGray2x2.jpg")
+	odd = Simd.ResizedImage(LoadTestImage(args, Simd.PixelFormat.Gray8), 401, 301)
+	reducedOdd = Simd.ReduceGray2x2(odd, Simd.Image())
+	if reducedOdd.Width() != 201 or reducedOdd.Height() != 151 :
+		raise Exception("ReduceGray2x2 wrong output size for odd input: ({0}, {1}) != (201, 151)!".format(reducedOdd.Width(), reducedOdd.Height()))
 
 ###################################################################################################
 
