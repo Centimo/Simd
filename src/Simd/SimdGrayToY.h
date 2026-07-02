@@ -133,6 +133,39 @@ namespace Simd
     }
 #endif
 
+#ifdef SIMD_AVX512BW_ENABLE    
+    namespace Avx512bw
+    {
+        SIMD_INLINE __m512i GrayToY(__m512i g)
+        {
+            static const __m512i G2Y_SCALE = SIMD_MM512_SET1_EPI16(Base::G2Y_SCALE);
+            static const __m512i G2Y_ROUND = SIMD_MM512_SET1_EPI16(Base::G2Y_ROUND);
+            static const __m512i G2Y_LO = SIMD_MM512_SET1_EPI8(Base::G2Y_LO);
+            static const __m512i G2Y_HI = SIMD_MM512_SET1_EPI8(Base::G2Y_HI);
+            __m512i g0 = UnpackU8<0>(g);
+            __m512i g1 = UnpackU8<1>(g);
+            __m512i y0 = _mm512_srli_epi16(_mm512_add_epi16(_mm512_mullo_epi16(g0, G2Y_SCALE), G2Y_ROUND), Base::G2Y_SHIFT);
+            __m512i y1 = _mm512_srli_epi16(_mm512_add_epi16(_mm512_mullo_epi16(g1, G2Y_SCALE), G2Y_ROUND), Base::G2Y_SHIFT);
+            __m512i y = _mm512_packus_epi16(y0, y1);
+            return _mm512_min_epu8(_mm512_adds_epu8(y, G2Y_LO), G2Y_HI);
+        }
+
+        SIMD_INLINE __m512i YToGray(__m512i y)
+        {
+            static const __m512i Y2G_SCALE = SIMD_MM512_SET1_EPI16(Base::Y2G_SCALE);
+            static const __m512i Y2G_ROUND = SIMD_MM512_SET1_EPI16(Base::Y2G_ROUND);
+            static const __m512i G2Y_LO = SIMD_MM512_SET1_EPI8(Base::G2Y_LO);
+            static const __m512i G2Y_HI = SIMD_MM512_SET1_EPI8(Base::G2Y_HI);
+            y = _mm512_subs_epu8(_mm512_min_epu8(y, G2Y_HI), G2Y_LO);
+            __m512i y0 = UnpackU8<0>(y);
+            __m512i y1 = UnpackU8<1>(y);
+            __m512i g0 = _mm512_srli_epi16(_mm512_add_epi16(_mm512_mullo_epi16(y0, Y2G_SCALE), Y2G_ROUND), Base::Y2G_SHIFT);
+            __m512i g1 = _mm512_srli_epi16(_mm512_add_epi16(_mm512_mullo_epi16(y1, Y2G_SCALE), Y2G_ROUND), Base::Y2G_SHIFT);
+            return _mm512_packus_epi16(g0, g1);
+        }
+    }
+#endif
+
 #ifdef SIMD_NEON_ENABLE
     namespace Neon
     {
@@ -169,19 +202,18 @@ namespace Simd
 #ifdef SIMD_SVE2_ENABLE
     namespace Sve2
     {
-        SIMD_INLINE svuint8_t GrayToY(const svuint8_t& g)
+        SIMD_INLINE svuint8_t GrayToY(const svuint8_t& g, const svbool_t _true)
         {
-            const svbool_t mask16 = svptrue_b16();
             const svuint16_t G2Y_SCALE = svdup_n_u16(Base::G2Y_SCALE);
             const svuint16_t G2Y_ROUND = svdup_n_u16(Base::G2Y_ROUND);
-            const svuint8_t G2Y_LO = svdup_n_u8(Base::G2Y_LO);
-            const svuint8_t G2Y_HI = svdup_n_u8(Base::G2Y_HI);
+            //const svuint8_t G2Y_LO = svdup_n_u8(Base::G2Y_LO);
+            //const svuint8_t G2Y_HI = svdup_n_u8(Base::G2Y_HI);
             svuint16_t g0 = svmovlb_u16(g);
             svuint16_t g1 = svmovlt_u16(g);
-            svuint16_t y0 = svlsr_n_u16_x(mask16, svadd_u16_x(mask16, svmul_u16_x(mask16, g0, G2Y_SCALE), G2Y_ROUND), Base::G2Y_SHIFT);
-            svuint16_t y1 = svlsr_n_u16_x(mask16, svadd_u16_x(mask16, svmul_u16_x(mask16, g1, G2Y_SCALE), G2Y_ROUND), Base::G2Y_SHIFT);
+            svuint16_t y0 = svlsr_n_u16_x(_true, svadd_u16_x(_true, svmul_u16_x(_true, g0, G2Y_SCALE), G2Y_ROUND), Base::G2Y_SHIFT);
+            svuint16_t y1 = svlsr_n_u16_x(_true, svadd_u16_x(_true, svmul_u16_x(_true, g1, G2Y_SCALE), G2Y_ROUND), Base::G2Y_SHIFT);
             svuint8_t y = svqxtnt_u16(svqxtnb_u16(y0), y1);
-            return svmin_u8_x(svptrue_b8(), svqadd_u8(y, G2Y_LO), G2Y_HI);
+            return svmin_n_u8_x(_true, svqadd_n_u8(y, Base::G2Y_LO), Base::G2Y_HI);
         }
 
         SIMD_INLINE svuint8_t YToGray(const svuint8_t& y)
@@ -200,39 +232,6 @@ namespace Simd
         }
     }
 #endif
-
-#ifdef SIMD_AVX512BW_ENABLE    
-    namespace Avx512bw
-    {
-        SIMD_INLINE __m512i GrayToY(__m512i g)
-        {
-            static const __m512i G2Y_SCALE = SIMD_MM512_SET1_EPI16(Base::G2Y_SCALE);
-            static const __m512i G2Y_ROUND = SIMD_MM512_SET1_EPI16(Base::G2Y_ROUND);
-            static const __m512i G2Y_LO = SIMD_MM512_SET1_EPI8(Base::G2Y_LO);
-            static const __m512i G2Y_HI = SIMD_MM512_SET1_EPI8(Base::G2Y_HI);
-            __m512i g0 = UnpackU8<0>(g);
-            __m512i g1 = UnpackU8<1>(g);
-            __m512i y0 = _mm512_srli_epi16(_mm512_add_epi16(_mm512_mullo_epi16(g0, G2Y_SCALE), G2Y_ROUND), Base::G2Y_SHIFT);
-            __m512i y1 = _mm512_srli_epi16(_mm512_add_epi16(_mm512_mullo_epi16(g1, G2Y_SCALE), G2Y_ROUND), Base::G2Y_SHIFT);
-            __m512i y = _mm512_packus_epi16(y0, y1);
-            return _mm512_min_epu8(_mm512_adds_epu8(y, G2Y_LO), G2Y_HI);
-        }
-
-        SIMD_INLINE __m512i YToGray(__m512i y)
-        {
-            static const __m512i Y2G_SCALE = SIMD_MM512_SET1_EPI16(Base::Y2G_SCALE);
-            static const __m512i Y2G_ROUND = SIMD_MM512_SET1_EPI16(Base::Y2G_ROUND);
-            static const __m512i G2Y_LO = SIMD_MM512_SET1_EPI8(Base::G2Y_LO);
-            static const __m512i G2Y_HI = SIMD_MM512_SET1_EPI8(Base::G2Y_HI);
-            y = _mm512_subs_epu8(_mm512_min_epu8(y, G2Y_HI), G2Y_LO);
-            __m512i y0 = UnpackU8<0>(y);
-            __m512i y1 = UnpackU8<1>(y);
-            __m512i g0 = _mm512_srli_epi16(_mm512_add_epi16(_mm512_mullo_epi16(y0, Y2G_SCALE), Y2G_ROUND), Base::Y2G_SHIFT);
-            __m512i g1 = _mm512_srli_epi16(_mm512_add_epi16(_mm512_mullo_epi16(y1, Y2G_SCALE), Y2G_ROUND), Base::Y2G_SHIFT);
-            return _mm512_packus_epi16(g0, g1);
-        }
-    }
-#endif
 }
 
-#endif//__SimdGrayToY_h__
+#endif
