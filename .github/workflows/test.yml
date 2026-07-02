@@ -43,16 +43,6 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: python3 ./Test.py "-r=.."
       
-name: MSBuildTest
-
-on:
-  push:
-    branches: [ "dev" ]
-
-permissions:
-  contents: read
-
-jobs:
   build_and_test_vs2022:
     runs-on: windows-latest
     
