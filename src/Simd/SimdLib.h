@@ -4542,6 +4542,8 @@ extern "C"
 
         \short Calculates HOG direction histograms for an 8-bit gray image.
 
+        \deprecated This function will be removed in the nearest future.
+
         The function uses central differences for pixels except the one-pixel image border:
         \verbatim
         dx = src[x + 1, y] - src[x - 1, y];
@@ -4565,7 +4567,7 @@ extern "C"
         \param [in] quantization - a direction quantization. Must be even.
         \param [out] histograms - a pointer to buffer with histograms. Array must have size greater or equal to (width/cellX)*(height/cellY)*quantization.
     */
-    SIMD_API void SimdHogDirectionHistograms(const uint8_t * src, size_t stride, size_t width, size_t height,
+    SIMD_DEPRECATED SIMD_API void SimdHogDirectionHistograms(const uint8_t * src, size_t stride, size_t width, size_t height,
         size_t cellX, size_t cellY, size_t quantization, float * histograms);
 
     /*! @ingroup hog
@@ -4573,6 +4575,8 @@ extern "C"
         \fn void SimdHogExtractFeatures(const uint8_t * src, size_t stride, size_t width, size_t height, float * features);
 
         \short Extracts 31 HOG features per 8x8 cell from an 8-bit gray image.
+
+        \deprecated This function will be removed in the nearest future.
 
         The function builds 18 signed gradient-orientation histograms for 8x8 cells, estimates
         normalization factors from neighboring 2x2 blocks, clips normalized values by 0.2, and writes
@@ -4591,13 +4595,15 @@ extern "C"
         \param [in] height - an image height. It must be a multiple of 8. Its minimal value is 16.
         \param [out] features - a pointer to buffer with features. Array must have size greater or equal to (width/8)*(height/8)*31.
     */
-    SIMD_API void SimdHogExtractFeatures(const uint8_t * src, size_t stride, size_t width, size_t height, float * features);
+    SIMD_DEPRECATED SIMD_API void SimdHogExtractFeatures(const uint8_t * src, size_t stride, size_t width, size_t height, float * features);
 
     /*! @ingroup hog
 
         \fn void SimdHogDeinterleave(const float * src, size_t srcStride, size_t width, size_t height, size_t count, float ** dst, size_t dstStride);
 
         \short Deinterleaves a 32-bit floating-point image into separate planes.
+
+        \deprecated This function will be removed in the nearest future.
 
         For every point and plane:
         \verbatim
@@ -4614,13 +4620,15 @@ extern "C"
         \param [out] dst - a pointer to array with pointers to output planes.
         \param [in] dstStride - a row size of output images (in 32-bit floats).
     */
-    SIMD_API void SimdHogDeinterleave(const float * src, size_t srcStride, size_t width, size_t height, size_t count, float ** dst, size_t dstStride);
+    SIMD_DEPRECATED SIMD_API void SimdHogDeinterleave(const float * src, size_t srcStride, size_t width, size_t height, size_t count, float ** dst, size_t dstStride);
 
     /*! @ingroup hog
 
         \fn void SimdHogFilterSeparable(const float * src, size_t srcStride, size_t width, size_t height, const float * rowFilter, size_t rowSize, const float * colFilter, size_t colSize, float * dst, size_t dstStride, int add);
 
         \short Applies a valid-area separable filter to a 32-bit floating-point image.
+
+        \deprecated This function will be removed in the nearest future.
 
         The destination size is (width - rowSize + 1) by (height - colSize + 1). For every output
         point:
@@ -4649,8 +4657,7 @@ extern "C"
         \param [in] dstStride - a row size of output image (in 32-bit floats).
         \param [in] add - a flag: if non-zero, the filtered result is added to dst; otherwise dst is overwritten.
     */
-    SIMD_API void SimdHogFilterSeparable(const float * src, size_t srcStride, size_t width, size_t height, const float * rowFilter, size_t rowSize, const float * colFilter, size_t colSize, float * dst, size_t dstStride, int add);
-
+    SIMD_DEPRECATED SIMD_API void SimdHogFilterSeparable(const float * src, size_t srcStride, size_t width, size_t height, const float * rowFilter, size_t rowSize, const float * colFilter, size_t colSize, float * dst, size_t dstStride, int add);
 
     /*! @ingroup image_io
 

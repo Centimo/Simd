@@ -2193,9 +2193,11 @@ namespace Simd
 
     /*! @ingroup hog
 
-        \fn void SimdHogDirectionHistograms(const View<A> & src, const Point<ptrdiff_t> & cell, size_t quantization, float * histograms);
+        \fn void HogDirectionHistograms(const View<A> & src, const Point<ptrdiff_t> & cell, size_t quantization, float * histograms);
 
         \short Calculates HOG direction histograms for 8-bit gray image.
+
+        \deprecated This function will be removed in the nearest future.
 
         Calculates HOG direction histogram for every cell of 8-bit gray image. This function is useful for face recognition.
 
@@ -2206,7 +2208,7 @@ namespace Simd
         \param [in] quantization - a direction quantization. Must be even.
         \param [out] histograms - a pointer to buffer with histograms. Array must have size greater or equal to (src.width/cell.x)*(src.height/cell.y)*quantization.
     */
-    template<template<class> class A> SIMD_INLINE void HogDirectionHistograms(const View<A> & src, const Point<ptrdiff_t> & cell, size_t quantization, float * histograms)
+    template<template<class> class A> SIMD_DEPRECATED SIMD_INLINE void HogDirectionHistograms(const View<A> & src, const Point<ptrdiff_t> & cell, size_t quantization, float * histograms)
     {
         assert(src.format == View<A>::Gray8 && src.width%cell.x == 0 && src.height%cell.y == 0 && quantization % 2 == 0);
 
