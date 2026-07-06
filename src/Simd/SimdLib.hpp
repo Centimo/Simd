@@ -2778,6 +2778,8 @@ namespace Simd
 
         \short Converts a 8-bit gray image to the 32-bit float array.
 
+        \deprecated This function will be removed in the nearest future.
+
         The length of output array must be equal to the area of input image.
 
         For every point:
@@ -2792,7 +2794,7 @@ namespace Simd
         \param [in] stride - a row size of the output array.
         \param [in] inversion - a flag of color inversion.
     */
-    template<template<class> class A> SIMD_INLINE void NeuralConvert(const View<A> & src, float * dst, size_t stride, bool inversion)
+    template<template<class> class A> SIMD_DEPRECATED SIMD_INLINE void NeuralConvert(const View<A> & src, float * dst, size_t stride, bool inversion)
     {
         assert(src.format == View<A>::Gray8);
 
