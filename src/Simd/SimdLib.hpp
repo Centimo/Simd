@@ -2851,6 +2851,8 @@ namespace Simd
 
         \short Calculates result 8-bit gray image as product of two vectors.
 
+        \deprecated This function will be removed in the nearest future.
+
         For all points:
         \verbatim
         dst[x, y] = horizontal[x]*vertical[y]/255;
@@ -2862,7 +2864,7 @@ namespace Simd
         \param [in] horizontal - a pointer to pixels data of horizontal vector. It length is equal to result image width.
         \param [out] dst - a result image.
     */
-    template<template<class> class A> SIMD_INLINE void VectorProduct(const uint8_t * vertical, const uint8_t * horizontal, View<A>& dst)
+    template<template<class> class A> SIMD_DEPRECATED SIMD_INLINE void VectorProduct(const uint8_t * vertical, const uint8_t * horizontal, View<A>& dst)
     {
         assert(dst.format == View<A>::Gray8);
 

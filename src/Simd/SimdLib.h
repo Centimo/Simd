@@ -6079,6 +6079,8 @@ extern "C"
 
         \short Calculates an 8-bit gray image as the normalized outer product of two 8-bit vectors.
 
+        \deprecated This function will be removed in the nearest future.
+
         For all points:
         \verbatim
         dst[x, y] = DivideBy255(horizontal[x]*vertical[y]);
@@ -6094,7 +6096,7 @@ extern "C"
         \param [in] width - a width of the output image.
         \param [in] height - a height of the output image.
     */
-    SIMD_API void SimdVectorProduct(const uint8_t * vertical, const uint8_t * horizontal,
+    SIMD_DEPRECATED SIMD_API void SimdVectorProduct(const uint8_t * vertical, const uint8_t * horizontal,
         uint8_t * dst, size_t stride, size_t width, size_t height);
 
     /*! @ingroup recursive_bilateral_filter

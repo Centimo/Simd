@@ -65,22 +65,6 @@ namespace Test
                 func(a.data, a.stride, b.data, b.stride, a.width, a.height, dst.data, dst.stride, type);
             }
         };
-
-        struct FuncVP
-        {
-            typedef void(*FuncPtr)(const uint8_t * vertical, const uint8_t * horizontal, uint8_t * dst, size_t stride, size_t width, size_t height);
-
-            FuncPtr func;
-            String description;
-
-            FuncVP(const FuncPtr & f, const String & d) : func(f), description(d) {}
-
-            void Call(const View & v, const View & h, View & dst) const
-            {
-                TEST_PERFORMANCE_TEST(description);
-                func(v.data, h.data, dst.data, dst.stride, dst.width, dst.height);
-            }
-        };
     }
 
     SIMD_INLINE String OperationBinary8uTypeDescription(SimdOperationBinary8uType type)
@@ -134,8 +118,6 @@ namespace Test
 
 #define FUNC_OB16I(function) \
     FuncOB16I(function, std::string(#function))
-
-#define ARGS_VP(function) FuncVP(function, std::string(#function))
 
     bool OperationBinary8uAutoTest(View::Format format, int width, int height, SimdOperationBinary8uType type, const FuncOB8U & f1, const FuncOB8U & f2)
     {
@@ -289,6 +271,39 @@ namespace Test
         return result;
     }
 
+    //-------------------------------------------------------------------------------------------------
+
+#if defined(_MSC_VER)
+#pragma warning (push)
+#pragma warning (disable: 4996)
+#endif
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
+    namespace 
+    {
+        struct FuncVP
+        {
+            typedef void(*FuncPtr)(const uint8_t* vertical, const uint8_t* horizontal, uint8_t* dst, size_t stride, size_t width, size_t height);
+
+            FuncPtr func;
+            String description;
+
+            FuncVP(const FuncPtr& f, const String& d) : func(f), description(d) {}
+
+            void Call(const View& v, const View& h, View& dst) const
+            {
+                TEST_PERFORMANCE_TEST(description);
+                func(v.data, h.data, dst.data, dst.stride, dst.width, dst.height);
+            }
+        };
+    }
+
+#define ARGS_VP(function) FuncVP(function, std::string(#function))
+
     bool VectorProductAutoTest(int width, int height, const FuncVP & f1, const FuncVP & f2)
     {
         bool result = true;
@@ -356,4 +371,13 @@ namespace Test
 
         return result;
     }
+
+#if defined(_MSC_VER)
+#pragma warning (pop)
+#endif
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
 }
