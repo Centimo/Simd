@@ -290,7 +290,7 @@ namespace Test
     {
         bool result = true;
 
-        //result = result && SynetPoolingMax32fAutoTest(::SimdTensorFormatNchw, f1, f2);
+        result = result && SynetPoolingMax32fAutoTest(::SimdTensorFormatNchw, f1, f2);
         result = result && SynetPoolingMax32fAutoTest(::SimdTensorFormatNhwc, f1, f2);
 
         return result;
